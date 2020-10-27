@@ -1,17 +1,17 @@
 package de.srlabs.simlib;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.StackWalker;
+import java.lang.StackWalker.Option;
+import java.lang.StackWalker.StackFrame;
 
 public class LoggingUtils {
 
-    private static Method m;
+    private static StackWalker walker;
 
     static {
         try {
-            m = Throwable.class.getDeclaredMethod("getStackTraceElement", int.class);
-            m.setAccessible(true);
-        } catch (NoSuchMethodException e) { // this should never happen really
+            walker = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
+        } catch (IllegalStateException e) { // this should never happen really
             e.printStackTrace(System.err);
         }
     }
@@ -22,22 +22,12 @@ public class LoggingUtils {
     }
 
     private static String getMethodName(final int depth) {
-        try {
-            StackTraceElement element = (StackTraceElement) m.invoke(new Throwable(), depth + 1);
-            return element.getMethodName();
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace(System.err);
-            return null;
-        }
+        StackFrame frame = walker.walk(stream1 -> stream1.skip(depth + 1).findFirst().orElse(null));
+        return frame == null ? "caller: null" : frame.getMethodName();
     }
 
     private static String getClassName(final int depth) {
-        try {
-            StackTraceElement element = (StackTraceElement) m.invoke(new Throwable(), depth + 1);
-            return element.getClassName();
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace(System.err);
-            return null;
-        }
+        Class<?> callerClass = walker.getCallerClass();
+        return callerClass.getName();
     }
 }

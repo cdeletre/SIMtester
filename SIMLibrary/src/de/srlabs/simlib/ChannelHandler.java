@@ -44,7 +44,7 @@ public class ChannelHandler {
 
             version = m.group(1);
 
-            if (m.groupCount() == 1) { // got version only
+            if (m.groupCount() == 1 || m.group(2) == null) { // got version only
                 patchversion = 0;
             } else { // got version and patch
                 patchversion = Integer.valueOf(m.group(2));
